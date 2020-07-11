@@ -23,7 +23,6 @@ final_img = ''
 main_color = (0, 0, 0)
 bg_color = (255, 255, 255)
 ress = []
-First = True
 # end
 
 # res detect
@@ -31,6 +30,7 @@ for i in os.listdir('res'):
     if os.path.isdir('res/' + i):
         ress.append(i)
 # end
+
 
 class Ui_MainWindow(QtWidgets.QMainWindow):
     def display(self):
@@ -285,8 +285,6 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                         tmp[i].append(1)
                     else:
                         tmp[i].append(0)
-        percent_check = 0
-        percent = 0
         for i in range(final_height):
             for j in range(final_width):
                 tm = tmp[i // 13][j // 8]
