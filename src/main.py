@@ -121,8 +121,11 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.checkBox = QtWidgets.QCheckBox(self.centralwidget)
         self.checkBox.setGeometry(QtCore.QRect(30, 160, 70, 17))
         self.checkBox.setObjectName("checkBox")
+        self.checkBox_r = QtWidgets.QCheckBox(self.centralwidget)
+        self.checkBox_r.setGeometry(QtCore.QRect(30, 180, 70, 17))
+        self.checkBox_r.setObjectName("checkBoxr")
         self.sens = QtWidgets.QDoubleSpinBox(self.centralwidget)
-        self.sens.setGeometry(QtCore.QRect(80, 210, 60, 17))
+        self.sens.setGeometry(QtCore.QRect(75, 209, 42, 22))
         self.sens.setMinimum(0)
         self.sens.setMaximum(1)
         self.sens.setValue(0.5)
@@ -199,6 +202,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         for l in range(len(ress)):
             self.comboBox.setItemText(l, _translate("self", ress[l]))
         self.checkBox.setText(_translate("self", "Gradient"))
+        self.checkBox_r.setText(_translate("self", "Reverse"))
         self.btn_bgcolor.setText(_translate("self", "Pick bg color"))
         self.btn_bgcolor.clicked.connect(self.color_pick_bg)
         self.btn_maincolor.setText(_translate("self", "Pick main color"))
@@ -247,8 +251,10 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.label_3.setText("Final Image size : {width} x {height}".format(width=final_width, height=final_height))
 
     def show_about(self):
+        global icon
         dialog = QtWidgets.QMessageBox()
         dialog.setWindowTitle('About')
+        dialog.setWindowIcon(iconFromBase64(icon))
         dialog.setText('This programm is created by mohammadamin Alidoost\n\nContact me: mohammad_780@yahoo.com')
         dialog.setIcon(QtWidgets.QMessageBox.Information)
         dialog.setStandardButtons(QtWidgets.QMessageBox.Ok)
@@ -281,29 +287,35 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             return
         final_img = np.zeros((final_height, final_width, 3), np.uint8)
         img_tm = cv2.resize(img, (int(width / self.spinBox.value()), int(height / self.spinBox_2.value())))
+        if self.checkBox_r.isChecked():
+            zero = 1
+            one = 0
+        else:
+            zero = 0
+            one = 1
         tmp = []
         if self.checkBox.isChecked():
             for i in range(img_tm.shape[0]):
                 tmp.append([])
                 for j in range(img_tm.shape[1]):
                     if img_tm[i][j] < sens:
-                        tmp[i].append((1, img_tm[i][j]))
+                        tmp[i].append((one, img_tm[i][j]))
                     else:
-                        tmp[i].append((0, img_tm[i][j]))
+                        tmp[i].append((zero, img_tm[i][j]))
         else:
             for i in range(img_tm.shape[0]):
                 tmp.append([])
                 for j in range(img_tm.shape[1]):
                     if img_tm[i][j] < sens:
-                        tmp[i].append(1)
+                        tmp[i].append(one)
                     else:
-                        tmp[i].append(0)
+                        tmp[i].append(zero)
         for i in range(final_height):
             for j in range(final_width):
                 tm = tmp[i // 13][j // 8]
                 if self.checkBox.isChecked():
+                    val = tm[1]
                     if tm[0] == 0:
-                        val = tm[1]
                         if img_0[i % 13][j % 8] > 127:
                             final_img[i][j][0] = 255
                             final_img[i][j][1] = 255
@@ -342,7 +354,8 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                             final_img[i][j][2] = main_color[2]
         self.lb_Done.setText('Done !')
         self.progressBar.setValue(100)
-        self.ui.update(final_img)
+        if display.onScreen:
+            self.ui.update(final_img)
 
     def standard_Image_Size(self):
         global width, height
