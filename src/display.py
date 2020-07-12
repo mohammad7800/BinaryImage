@@ -74,5 +74,3 @@ class Ui_DisplayWindow(QtWidgets.QMainWindow):
         onScreen = False
         event.accept()
 
-
-
