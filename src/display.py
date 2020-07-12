@@ -8,6 +8,7 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+import sys
 
 onScreen = False
 
@@ -66,19 +67,10 @@ class Ui_DisplayWindow(QtWidgets.QMainWindow):
         self.label.setPixmap(QtGui.QPixmap.fromImage(qImg))
 
     def quitt(self):
-        exit(0)
+        sys.exit(0)
 
     def closeEvent(self, event):
         global onScreen
         onScreen = False
         event.accept()
 
-
-if __name__ == "__main__":
-    import sys
-    app = QtWidgets.QApplication(sys.argv)
-    MainWindow = QtWidgets.QMainWindow()
-    ui = Ui_DisplayWindow()
-    ui.setupUi(MainWindow)
-    MainWindow.show()
-    sys.exit(app.exec_())
