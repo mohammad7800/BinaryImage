@@ -121,6 +121,15 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.checkBox = QtWidgets.QCheckBox(self.centralwidget)
         self.checkBox.setGeometry(QtCore.QRect(30, 160, 70, 17))
         self.checkBox.setObjectName("checkBox")
+        self.sens = QtWidgets.QDoubleSpinBox(self.centralwidget)
+        self.sens.setGeometry(QtCore.QRect(80, 210, 60, 17))
+        self.sens.setMinimum(0)
+        self.sens.setMaximum(1)
+        self.sens.setValue(0.5)
+        self.sens.setSingleStep(0.1)
+        self.lb_sens = QtWidgets.QLabel(self.centralwidget)
+        self.lb_sens.setGeometry(QtCore.QRect(30, 210, 40, 17))
+        self.lb_sens.setText('Sens :')
         self.btn_bgcolor = QtWidgets.QPushButton(self.centralwidget)
         self.btn_bgcolor.setGeometry(QtCore.QRect(150, 160, 75, 23))
         self.btn_bgcolor.setObjectName("btn_bgcolor")
@@ -265,6 +274,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         global final_img, final_height, final_width, width, height, img_1, img_0
         self.lb_Done.setText('')
         self.progressBar.setValue(0)
+        sens = int(self.sens.value() * 255)
         img_1 = cv2.imread('res/' + self.comboBox.currentText() + '/' + list(filter(lambda x: x.lower().startswith('1'), os.listdir('res/' + self.comboBox.currentText())))[0], 0)
         img_0 = cv2.imread('res/' + self.comboBox.currentText() + '/' + list(filter(lambda x: x.lower().startswith('0'), os.listdir('res/' + self.comboBox.currentText())))[0], 0)
         if self.edt_browse.text() == 'Choose Your Image...':
@@ -276,7 +286,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             for i in range(img_tm.shape[0]):
                 tmp.append([])
                 for j in range(img_tm.shape[1]):
-                    if img_tm[i][j] < 127:
+                    if img_tm[i][j] < sens:
                         tmp[i].append((1, img_tm[i][j]))
                     else:
                         tmp[i].append((0, img_tm[i][j]))
@@ -284,7 +294,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             for i in range(img_tm.shape[0]):
                 tmp.append([])
                 for j in range(img_tm.shape[1]):
-                    if img_tm[i][j] < 127:
+                    if img_tm[i][j] < sens:
                         tmp[i].append(1)
                     else:
                         tmp[i].append(0)
@@ -366,4 +376,3 @@ if __name__ == "__main__":
     ui = Ui_MainWindow()
     ui.setupUi()
     sys.exit(app.exec_())
-
