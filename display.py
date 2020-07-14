@@ -1,12 +1,3 @@
-# -*- coding: utf-8 -*-
-
-# Form implementation generated from reading ui file 'display.ui'
-#
-# Created by: PyQt5 UI code generator 5.13.2
-#
-# WARNING! All changes made in this file will be lost!
-
-
 from PyQt5 import QtCore, QtGui, QtWidgets
 import sys
 
@@ -49,7 +40,7 @@ class Ui_DisplayWindow(QtWidgets.QMainWindow):
         except ValueError:
             height, width, channel = ready.shape
             bytesPerLine = 3 * width
-            qImg = QtGui.QImage(ready.data, width, height, bytesPerLine, QtGui.QImage.Format_RGB888)
+            qImg = QtGui.QImage(ready.data, width, height, bytesPerLine, QtGui.QImage.Format_RGB888).rgbSwapped()
             self.setFixedSize(width, height)
             self.label.setFixedSize(width, height)
             self.label.setPixmap(QtGui.QPixmap.fromImage(qImg))
@@ -60,9 +51,9 @@ class Ui_DisplayWindow(QtWidgets.QMainWindow):
 
     def update(self, img):
         height, width, channel = img.shape
-        self.window.setFixedSize(width, height)
+        self.setFixedSize(width, height)
         bytesPerLine = 3 * width
-        qImg = QtGui.QImage(img.data, width, height, bytesPerLine, QtGui.QImage.Format_RGB888)
+        qImg = QtGui.QImage(img.data, width, height, bytesPerLine, QtGui.QImage.Format_RGB888).rgbSwapped()
         self.label.setFixedSize(width, height)
         self.label.setPixmap(QtGui.QPixmap.fromImage(qImg))
 
