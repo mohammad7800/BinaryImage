@@ -1,12 +1,3 @@
-# -*- coding: utf-8 -*-
-
-# Form implementation generated from reading ui file 'main.ui'
-#
-# Created by: PyQt5 UI code generator 5.13.2
-#
-# WARNING! All changes made in this file will be lost!
-
-
 from PyQt5 import QtCore, QtGui, QtWidgets
 import display
 import cv2
@@ -111,12 +102,21 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.comboBox.setObjectName("comboBox")
         for _ in ress:
             self.comboBox.addItem('')
+        self.checkBox1 = QtWidgets.QCheckBox(self.centralwidget)
+        self.checkBox1.setGeometry(QtCore.QRect(30, 140, 70, 17))
+        self.checkBox1.setObjectName('CheckBoxF')
         self.checkBox = QtWidgets.QCheckBox(self.centralwidget)
         self.checkBox.setGeometry(QtCore.QRect(30, 160, 70, 17))
         self.checkBox.setObjectName("checkBox")
         self.checkBox_r = QtWidgets.QCheckBox(self.centralwidget)
         self.checkBox_r.setGeometry(QtCore.QRect(30, 180, 70, 17))
         self.checkBox_r.setObjectName("checkBoxr")
+        self.checkbox2 = QtWidgets.QCheckBox(self.centralwidget)
+        self.checkbox2.setGeometry(QtCore.QRect(400, 140, 70, 17))
+        self.checkbox2.setObjectName('CheckBoxFi')
+        self.checkbox3 = QtWidgets.QCheckBox(self.centralwidget)
+        self.checkbox3.setGeometry(QtCore.QRect(400, 160, 70, 17))
+        self.checkbox3.setObjectName('CheckBoxC')
         self.sens = QtWidgets.QDoubleSpinBox(self.centralwidget)
         self.sens.setGeometry(QtCore.QRect(75, 209, 42, 22))
         self.sens.setMinimum(0)
@@ -195,7 +195,13 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         for l in range(len(ress)):
             self.comboBox.setItemText(l, _translate("self", ress[l]))
         self.checkBox.setText(_translate("self", "Gradient"))
+        self.checkBox.clicked.connect(self.num_col)
         self.checkBox_r.setText(_translate("self", "Reverse"))
+        self.checkBox1.setText(_translate("self", "Fill bg"))
+        self.checkBox1.clicked.connect(self.fill_change)
+        self.checkbox2.setText(_translate("self", "Fill Nums"))
+        self.checkbox2.clicked.connect(self.num_col2)
+        self.checkbox3.setText(_translate("self", "RGB pic"))
         self.btn_bgcolor.setText(_translate("self", "Pick bg color"))
         self.btn_bgcolor.clicked.connect(self.color_pick_bg)
         self.btn_maincolor.setText(_translate("self", "Pick main color"))
@@ -216,6 +222,24 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         global final_width, final_height
         final_width, final_height = self.standard_Image_Size()
         self.display_img_size()
+
+    def num_col(self):
+        if self.checkBox.isChecked() and self.checkbox2.isChecked():
+            self.checkbox2.setChecked(False)
+
+    def num_col2(self):
+        if all([self.checkbox2.isChecked(), self.checkBox.isChecked()]):
+            self.checkBox.setChecked(False)
+        if self.checkbox2.isChecked():
+            self.btn_maincolor.setEnabled(False)
+        else:
+            self.btn_maincolor.setEnabled(True)
+
+    def fill_change(self):
+        if self.checkBox1.isChecked():
+            self.btn_bgcolor.setEnabled(False)
+        else:
+            self.btn_bgcolor.setEnabled(True)
 
     def color_pick_main(self):
         global main_color
@@ -276,8 +300,13 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         sens = int(self.sens.value() * 255)
         img_1 = cv2.imread('res/' + self.comboBox.currentText() + '/' + list(filter(lambda x: x.lower().startswith('1'), os.listdir('res/' + self.comboBox.currentText())))[0], 0)
         img_0 = cv2.imread('res/' + self.comboBox.currentText() + '/' + list(filter(lambda x: x.lower().startswith('0'), os.listdir('res/' + self.comboBox.currentText())))[0], 0)
-        if self.edt_browse.text() == 'Choose Your Image...':
+        if self.edt_browse.text() == 'Choose Your Image...' or not os.path.isfile(self.edt_browse.text()):
             return
+        if self.checkBox1.isChecked() or self.checkbox2.isChecked():
+            if self.checkbox3.isChecked():
+                img_tmp = cv2.resize(cv2.imread(self.edt_browse.text()), (final_width, final_height))
+            else:
+                img_tmp = cv2.resize(img, (final_width, final_height))
         final_img = np.zeros((final_height, final_width, 3), np.uint8)
         img_tm = cv2.resize(img, (int(width / self.spinBox.value()), int(height / self.spinBox_2.value())))
         if self.checkBox_r.isChecked():
@@ -309,42 +338,142 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                 if self.checkBox.isChecked():
                     val = tm[1]
                     if tm[0] == 0:
-                        if img_0[i % 13][j % 8] > 127:
-                            final_img[i][j][0] = 255
-                            final_img[i][j][1] = 255
-                            final_img[i][j][2] = 255
+                        if self.checkBox1.isChecked():
+                            if img_0[i % 13][j % 8] > 127:
+                                if self.checkbox3.isChecked():
+                                    final_img[i][j][0] = img_tmp[i][j][0]
+                                    final_img[i][j][1] = img_tmp[i][j][1]
+                                    final_img[i][j][2] = img_tmp[i][j][2]
+                                else:
+                                    final_img[i][j][0] = img_tmp[i][j]
+                                    final_img[i][j][1] = img_tmp[i][j]
+                                    final_img[i][j][2] = img_tmp[i][j]
+                            else:
+                                final_img[i][j][0] = val
+                                final_img[i][j][1] = val
+                                final_img[i][j][2] = val
                         else:
-                            final_img[i][j][0] = val
-                            final_img[i][j][1] = val
-                            final_img[i][j][2] = val
+                            if img_0[i % 13][j % 8] > 127:
+                                final_img[i][j][0] = 255
+                                final_img[i][j][1] = 255
+                                final_img[i][j][2] = 255
+                            else:
+                                final_img[i][j][0] = val
+                                final_img[i][j][1] = val
+                                final_img[i][j][2] = val
                     else:
-                        if img_1[i % 13][j % 8] > 127:
-                            final_img[i][j][0] = 255
-                            final_img[i][j][1] = 255
-                            final_img[i][j][2] = 255
+                        if self.checkBox1.isChecked():
+                            if img_1[i % 13][j % 8] > 127:
+                                if self.checkbox3.isChecked():
+                                    final_img[i][j][0] = img_tmp[i][j][0]
+                                    final_img[i][j][1] = img_tmp[i][j][1]
+                                    final_img[i][j][2] = img_tmp[i][j][2]
+                                else:
+                                    final_img[i][j][0] = img_tmp[i][j]
+                                    final_img[i][j][1] = img_tmp[i][j]
+                                    final_img[i][j][2] = img_tmp[i][j]
+                            else:
+                                final_img[i][j][0] = val
+                                final_img[i][j][1] = val
+                                final_img[i][j][2] = val
                         else:
-                            final_img[i][j][0] = val
-                            final_img[i][j][1] = val
-                            final_img[i][j][2] = val
+                            if img_1[i % 13][j % 8] > 127:
+                                final_img[i][j][0] = 255
+                                final_img[i][j][1] = 255
+                                final_img[i][j][2] = 255
+                            else:
+                                final_img[i][j][0] = val
+                                final_img[i][j][1] = val
+                                final_img[i][j][2] = val
                 else:
-                    if tm == 0:
-                        if img_0[i % 13][j % 8] > 127:
-                            final_img[i][j][0] = bg_color[0]
-                            final_img[i][j][1] = bg_color[1]
-                            final_img[i][j][2] = bg_color[2]
+                    if self.checkBox1.isChecked():
+                        if tm == 0:
+                            if img_0[i % 13][j % 8] > 127:
+                                if self.checkbox3.isChecked():
+                                    final_img[i][j][0] = img_tmp[i][j][0]
+                                    final_img[i][j][1] = img_tmp[i][j][1]
+                                    final_img[i][j][2] = img_tmp[i][j][2]
+                                else:
+                                    final_img[i][j][0] = img_tmp[i][j]
+                                    final_img[i][j][1] = img_tmp[i][j]
+                                    final_img[i][j][2] = img_tmp[i][j]
+                            else:
+                                if self.checkbox2.isChecked():
+                                    if self.checkbox3.isChecked():
+                                        final_img[i][j][0] = img_tmp[i][j][0]
+                                        final_img[i][j][1] = img_tmp[i][j][1]
+                                        final_img[i][j][2] = img_tmp[i][j][2]
+                                    else:
+                                        final_img[i][j][0] = img_tmp[i][j]
+                                        final_img[i][j][1] = img_tmp[i][j]
+                                        final_img[i][j][2] = img_tmp[i][j]
+                                else:
+                                    final_img[i][j][0] = main_color[0]
+                                    final_img[i][j][1] = main_color[1]
+                                    final_img[i][j][2] = main_color[2]
                         else:
-                            final_img[i][j][0] = main_color[0]
-                            final_img[i][j][1] = main_color[1]
-                            final_img[i][j][2] = main_color[2]
+                            if img_1[i % 13][j % 8] > 127:
+                                if self.checkbox3.isChecked():
+                                    final_img[i][j][0] = img_tmp[i][j][0]
+                                    final_img[i][j][1] = img_tmp[i][j][1]
+                                    final_img[i][j][2] = img_tmp[i][j][2]
+                                else:
+                                    final_img[i][j][0] = img_tmp[i][j]
+                                    final_img[i][j][1] = img_tmp[i][j]
+                                    final_img[i][j][2] = img_tmp[i][j]
+                            else:
+                                if self.checkbox2.isChecked():
+                                    if self.checkbox3.isChecked():
+                                        final_img[i][j][0] = img_tmp[i][j][0]
+                                        final_img[i][j][1] = img_tmp[i][j][1]
+                                        final_img[i][j][2] = img_tmp[i][j][2]
+                                    else:
+                                        final_img[i][j][0] = img_tmp[i][j]
+                                        final_img[i][j][1] = img_tmp[i][j]
+                                        final_img[i][j][2] = img_tmp[i][j]
+                                else:
+                                    final_img[i][j][0] = main_color[0]
+                                    final_img[i][j][1] = main_color[1]
+                                    final_img[i][j][2] = main_color[2]
                     else:
-                        if img_1[i % 13][j % 8] > 127:
-                            final_img[i][j][0] = bg_color[0]
-                            final_img[i][j][1] = bg_color[1]
-                            final_img[i][j][2] = bg_color[2]
+                        if tm == 0:
+                            if img_0[i % 13][j % 8] > 127:
+                                final_img[i][j][0] = bg_color[0]
+                                final_img[i][j][1] = bg_color[1]
+                                final_img[i][j][2] = bg_color[2]
+                            else:
+                                if self.checkbox2.isChecked():
+                                    if self.checkbox3.isChecked():
+                                        final_img[i][j][0] = img_tmp[i][j][0]
+                                        final_img[i][j][1] = img_tmp[i][j][1]
+                                        final_img[i][j][2] = img_tmp[i][j][2]
+                                    else:
+                                        final_img[i][j][0] = img_tmp[i][j]
+                                        final_img[i][j][1] = img_tmp[i][j]
+                                        final_img[i][j][2] = img_tmp[i][j]
+                                else:
+                                    final_img[i][j][0] = main_color[0]
+                                    final_img[i][j][1] = main_color[1]
+                                    final_img[i][j][2] = main_color[2]
                         else:
-                            final_img[i][j][0] = main_color[0]
-                            final_img[i][j][1] = main_color[1]
-                            final_img[i][j][2] = main_color[2]
+                            if img_1[i % 13][j % 8] > 127:
+                                final_img[i][j][0] = bg_color[0]
+                                final_img[i][j][1] = bg_color[1]
+                                final_img[i][j][2] = bg_color[2]
+                            else:
+                                if self.checkbox2.isChecked():
+                                    if self.checkbox3.isChecked():
+                                        final_img[i][j][0] = img_tmp[i][j][0]
+                                        final_img[i][j][1] = img_tmp[i][j][1]
+                                        final_img[i][j][2] = img_tmp[i][j][2]
+                                    else:
+                                        final_img[i][j][0] = img_tmp[i][j]
+                                        final_img[i][j][1] = img_tmp[i][j]
+                                        final_img[i][j][2] = img_tmp[i][j]
+                                else:
+                                    final_img[i][j][0] = main_color[0]
+                                    final_img[i][j][1] = main_color[1]
+                                    final_img[i][j][2] = main_color[2]
         self.lb_Done.setText('Done !')
         self.progressBar.setValue(100)
         if display.onScreen:
