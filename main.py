@@ -1,9 +1,10 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 import display
-import cv2
+from cv2 import imread, imwrite, resize
 import numpy as np
 import os
 import sys
+from PIL import Image
 # variables
 img = ''
 width, height = 0, 0
@@ -112,11 +113,14 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.checkBox_r.setGeometry(QtCore.QRect(30, 180, 70, 17))
         self.checkBox_r.setObjectName("checkBoxr")
         self.checkbox2 = QtWidgets.QCheckBox(self.centralwidget)
-        self.checkbox2.setGeometry(QtCore.QRect(400, 140, 70, 17))
+        self.checkbox2.setGeometry(QtCore.QRect(385, 140, 70, 17))
         self.checkbox2.setObjectName('CheckBoxFi')
         self.checkbox3 = QtWidgets.QCheckBox(self.centralwidget)
-        self.checkbox3.setGeometry(QtCore.QRect(400, 160, 70, 17))
+        self.checkbox3.setGeometry(QtCore.QRect(385, 160, 70, 17))
         self.checkbox3.setObjectName('CheckBoxC')
+        self.checkbox4 = QtWidgets.QCheckBox(self.centralwidget)
+        self.checkbox4.setGeometry(QtCore.QRect(385, 180, 70, 17))
+        self.checkbox4.setObjectName('CheckboxRcolor')
         self.sens = QtWidgets.QDoubleSpinBox(self.centralwidget)
         self.sens.setGeometry(QtCore.QRect(75, 209, 42, 22))
         self.sens.setMinimum(0)
@@ -126,6 +130,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.lb_sens = QtWidgets.QLabel(self.centralwidget)
         self.lb_sens.setGeometry(QtCore.QRect(30, 210, 40, 17))
         self.lb_sens.setText('Sens :')
+        self.lb_sens.adjustSize()
         self.btn_bgcolor = QtWidgets.QPushButton(self.centralwidget)
         self.btn_bgcolor.setGeometry(QtCore.QRect(150, 160, 75, 23))
         self.btn_bgcolor.setObjectName("btn_bgcolor")
@@ -181,30 +186,47 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.spinBox_2.valueChanged.connect(self.spinbox_value_changed)
         self.edt_browse.setText(_translate("self", "Choose Your Image..."))
         self.btn_browse.setText(_translate("self", "Browse"))
+        self.btn_browse.adjustSize()
         self.btn_browse.clicked.connect(self.btn_browse_clicked)
         self.btn_save.setText(_translate("self", "Save"))
+        self.btn_save.adjustSize()
         self.btn_save.clicked.connect(self.btn_save_clicked)
         self.btn_progress.setText(_translate("self", "Progress"))
+        self.btn_progress.adjustSize()
         self.btn_progress.clicked.connect(self.btn_progress_clicked)
         self.btn_display.setText(_translate("self", "Display"))
+        self.btn_display.adjustSize()
         self.btn_display.clicked.connect(self.display)
         self.lb_Done.setText(_translate("self", ""))
         self.lb_width.setText(_translate("self", "Width : "))
+        self.lb_width.adjustSize()
         self.lb_height.setText(_translate("self", "Height : "))
+        self.lb_height.adjustSize()
         self.label_3.setText(_translate("self", "Final Image size : ? x ?"))
+        self.label_3.adjustSize()
         for l in range(len(ress)):
             self.comboBox.setItemText(l, _translate("self", ress[l]))
         self.checkBox.setText(_translate("self", "Gradient"))
+        self.checkBox.adjustSize()
         self.checkBox.clicked.connect(self.num_col)
         self.checkBox_r.setText(_translate("self", "Reverse"))
+        self.checkBox_r.adjustSize()
         self.checkBox1.setText(_translate("self", "Fill bg"))
+        self.checkBox1.adjustSize()
         self.checkBox1.clicked.connect(self.fill_change)
         self.checkbox2.setText(_translate("self", "Fill Nums"))
+        self.checkbox2.adjustSize()
         self.checkbox2.clicked.connect(self.num_col2)
         self.checkbox3.setText(_translate("self", "RGB pic"))
+        self.checkbox3.adjustSize()
+        self.checkbox4.setText(_translate("self", "Reverse Colors"))
+        self.checkbox4.adjustSize()
+        self.checkbox4.setEnabled(False)
         self.btn_bgcolor.setText(_translate("self", "Pick bg color"))
+        self.btn_bgcolor.adjustSize()
         self.btn_bgcolor.clicked.connect(self.color_pick_bg)
         self.btn_maincolor.setText(_translate("self", "Pick main color"))
+        self.btn_maincolor.adjustSize()
         self.btn_maincolor.clicked.connect(self.color_pick_main)
         self.menuFile.setTitle(_translate("self", "File"))
         self.menuHelp.setTitle(_translate("self", "Help"))
@@ -226,6 +248,10 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
     def num_col(self):
         if self.checkBox.isChecked() and self.checkbox2.isChecked():
             self.checkbox2.setChecked(False)
+        if self.checkBox.isChecked():
+            self.checkbox4.setEnabled(True)
+        else:
+            self.checkbox4.setEnabled(False)
 
     def num_col2(self):
         if all([self.checkbox2.isChecked(), self.checkBox.isChecked()]):
@@ -246,26 +272,17 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         color = QtWidgets.QColorDialog.getColor()
         main_color = color.getRgb()[:3]
         self.clr_main.setStyleSheet('background-color: {};'.format(color.name()))
-        if all([main_color == (0, 0, 0), bg_color == (255, 255, 255)]):
-            self.checkBox.setEnabled(True)
-        else:
-            self.checkBox.setChecked(False)
-            self.checkBox.setEnabled(False)
 
     def color_pick_bg(self):
         global bg_color
         color = QtWidgets.QColorDialog.getColor()
         bg_color = color.getRgb()[:3]
         self.clr_bg.setStyleSheet('background-color: {};'.format(color.name()))
-        if all([main_color == (0, 0, 0), bg_color == (255, 255, 255)]):
-            self.checkBox.setEnabled(True)
-        else:
-            self.checkBox.setChecked(False)
-            self.checkBox.setEnabled(False)
 
     def display_img_size(self):
         global final_height, final_width
         self.label_3.setText("Final Image size : {width} x {height}".format(width=final_width, height=final_height))
+        self.label_3.adjustSize()
 
     def show_about(self):
         global icon
@@ -283,32 +300,46 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         if not filename:
             return
         self.edt_browse.setText(filename)
-        img = cv2.imread(filename, 0)
+        img = imread(filename, 0)
         height, width = img.shape[:2]
         final_width, final_height = self.standard_Image_Size()
         self.display_img_size()
 
     def btn_save_clicked(self):
         global final_img
-        path = QtWidgets.QFileDialog.getSaveFileName(filter='Images(*.Jpg *.Jpeg *.png)')
-        cv2.imwrite(path[0], final_img)
+        try:
+            if not final_img:
+                return
+        except ValueError:
+            path = QtWidgets.QFileDialog.getSaveFileName(filter='Images(*.Jpg *.Jpeg *.png)')[0]
+            if not path:
+                return
+            imwrite(path, final_img)
 
     def btn_progress_clicked(self):
         global final_img, final_height, final_width, width, height, img_1, img_0
         self.lb_Done.setText('')
         self.progressBar.setValue(0)
         sens = int(self.sens.value() * 255)
-        img_1 = cv2.imread('res/' + self.comboBox.currentText() + '/' + list(filter(lambda x: x.lower().startswith('1'), os.listdir('res/' + self.comboBox.currentText())))[0], 0)
-        img_0 = cv2.imread('res/' + self.comboBox.currentText() + '/' + list(filter(lambda x: x.lower().startswith('0'), os.listdir('res/' + self.comboBox.currentText())))[0], 0)
+        img_1 = imread('res/' + self.comboBox.currentText() + '/' + list(filter(lambda x: x.lower().startswith('1'), os.listdir('res/' + self.comboBox.currentText())))[0], 0)
+        img_0 = imread('res/' + self.comboBox.currentText() + '/' + list(filter(lambda x: x.lower().startswith('0'), os.listdir('res/' + self.comboBox.currentText())))[0], 0)
+        if img_0.shape[:2] != (13, 8):
+            im_0_name = 'res/' + self.comboBox.currentText() + '/' + list(filter(lambda x: x.lower().startswith('0'), os.listdir('res/' + self.comboBox.currentText())))[0]
+            Image.open(im_0_name).resize((8, 13)).save(im_0_name)
+            img_0 = imread(im_0_name, 0)
+        if img_1.shape[:2] != (13, 8):
+            im_1_name = 'res/' + self.comboBox.currentText() + '/' + list(filter(lambda x: x.lower().startswith('1'), os.listdir('res/' + self.comboBox.currentText())))[0]
+            Image.open(im_1_name).resize(8, 13).save(im_1_name)
+            img_1 = imread(im_1_name, 0)
         if self.edt_browse.text() == 'Choose Your Image...' or not os.path.isfile(self.edt_browse.text()):
             return
         if self.checkBox1.isChecked() or self.checkbox2.isChecked():
             if self.checkbox3.isChecked():
-                img_tmp = cv2.resize(cv2.imread(self.edt_browse.text()), (final_width, final_height))
+                img_tmp = resize(imread(self.edt_browse.text()), (final_width, final_height))
             else:
-                img_tmp = cv2.resize(img, (final_width, final_height))
+                img_tmp = resize(img, (final_width, final_height))
         final_img = np.zeros((final_height, final_width, 3), np.uint8)
-        img_tm = cv2.resize(img, (int(width / self.spinBox.value()), int(height / self.spinBox_2.value())))
+        img_tm = resize(img, (int(width / self.spinBox.value()), int(height / self.spinBox_2.value())))
         if self.checkBox_r.isChecked():
             zero = 1
             one = 0
@@ -335,8 +366,13 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         for i in range(final_height):
             for j in range(final_width):
                 tm = tmp[i // 13][j // 8]
+                # Check Gradient
                 if self.checkBox.isChecked():
                     val = tm[1]
+                    if max(main_color) == 0:
+                        light_color = (255, 255, 255)
+                    else:
+                        light_color = tuple(map(lambda x: x * (255 // max(main_color)), main_color))
                     if tm[0] == 0:
                         if self.checkBox1.isChecked():
                             if img_0[i % 13][j % 8] > 127:
@@ -349,18 +385,28 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                                     final_img[i][j][1] = img_tmp[i][j]
                                     final_img[i][j][2] = img_tmp[i][j]
                             else:
-                                final_img[i][j][0] = val
-                                final_img[i][j][1] = val
-                                final_img[i][j][2] = val
+                                if self.checkbox4.isChecked():
+                                    final_img[i][j][0] = (((255-val) / 255) * light_color[2])
+                                    final_img[i][j][1] = (((255-val) / 255) * light_color[1])
+                                    final_img[i][j][2] = (((255-val) / 255) * light_color[0])
+                                else:
+                                    final_img[i][j][0] = ((val / 255) * light_color[2])
+                                    final_img[i][j][1] = ((val / 255) * light_color[1])
+                                    final_img[i][j][2] = ((val / 255) * light_color[0])
                         else:
                             if img_0[i % 13][j % 8] > 127:
-                                final_img[i][j][0] = 255
-                                final_img[i][j][1] = 255
-                                final_img[i][j][2] = 255
+                                final_img[i][j][0] = bg_color[2]
+                                final_img[i][j][1] = bg_color[1]
+                                final_img[i][j][2] = bg_color[0]
                             else:
-                                final_img[i][j][0] = val
-                                final_img[i][j][1] = val
-                                final_img[i][j][2] = val
+                                if self.checkbox4.isChecked():
+                                    final_img[i][j][0] = (((255-val) / 255) * light_color[2])
+                                    final_img[i][j][1] = (((255-val) / 255) * light_color[1])
+                                    final_img[i][j][2] = (((255-val) / 255) * light_color[0])
+                                else:
+                                    final_img[i][j][0] = ((val / 255) * light_color[2])
+                                    final_img[i][j][1] = ((val / 255) * light_color[1])
+                                    final_img[i][j][2] = ((val / 255) * light_color[0])
                     else:
                         if self.checkBox1.isChecked():
                             if img_1[i % 13][j % 8] > 127:
@@ -373,18 +419,29 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                                     final_img[i][j][1] = img_tmp[i][j]
                                     final_img[i][j][2] = img_tmp[i][j]
                             else:
-                                final_img[i][j][0] = val
-                                final_img[i][j][1] = val
-                                final_img[i][j][2] = val
+                                if self.checkbox4.isChecked():
+                                    final_img[i][j][0] = (((255-val) / 255) * light_color[2])
+                                    final_img[i][j][1] = (((255-val) / 255) * light_color[1])
+                                    final_img[i][j][2] = (((255-val) / 255) * light_color[0])
+                                else:
+                                    final_img[i][j][0] = ((val / 255) * light_color[2])
+                                    final_img[i][j][1] = ((val / 255) * light_color[1])
+                                    final_img[i][j][2] = ((val / 255) * light_color[0])
                         else:
                             if img_1[i % 13][j % 8] > 127:
-                                final_img[i][j][0] = 255
-                                final_img[i][j][1] = 255
-                                final_img[i][j][2] = 255
+                                final_img[i][j][0] = bg_color[2]
+                                final_img[i][j][1] = bg_color[1]
+                                final_img[i][j][2] = bg_color[0]
                             else:
-                                final_img[i][j][0] = val
-                                final_img[i][j][1] = val
-                                final_img[i][j][2] = val
+                                if self.checkbox4.isChecked():
+                                    final_img[i][j][0] = (((255-val) / 255) * light_color[2])
+                                    final_img[i][j][1] = (((255-val) / 255) * light_color[1])
+                                    final_img[i][j][2] = (((255-val) / 255) * light_color[0])
+                                else:
+                                    final_img[i][j][0] = ((val / 255) * light_color[2])
+                                    final_img[i][j][1] = ((val / 255) * light_color[1])
+                                    final_img[i][j][2] = ((val / 255) * light_color[0])
+                # End of Gradient
                 else:
                     if self.checkBox1.isChecked():
                         if tm == 0:
@@ -408,9 +465,9 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                                         final_img[i][j][1] = img_tmp[i][j]
                                         final_img[i][j][2] = img_tmp[i][j]
                                 else:
-                                    final_img[i][j][0] = main_color[0]
+                                    final_img[i][j][0] = main_color[2]
                                     final_img[i][j][1] = main_color[1]
-                                    final_img[i][j][2] = main_color[2]
+                                    final_img[i][j][2] = main_color[0]
                         else:
                             if img_1[i % 13][j % 8] > 127:
                                 if self.checkbox3.isChecked():
@@ -432,15 +489,15 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                                         final_img[i][j][1] = img_tmp[i][j]
                                         final_img[i][j][2] = img_tmp[i][j]
                                 else:
-                                    final_img[i][j][0] = main_color[0]
+                                    final_img[i][j][0] = main_color[2]
                                     final_img[i][j][1] = main_color[1]
-                                    final_img[i][j][2] = main_color[2]
+                                    final_img[i][j][2] = main_color[0]
                     else:
                         if tm == 0:
                             if img_0[i % 13][j % 8] > 127:
-                                final_img[i][j][0] = bg_color[0]
+                                final_img[i][j][0] = bg_color[2]
                                 final_img[i][j][1] = bg_color[1]
-                                final_img[i][j][2] = bg_color[2]
+                                final_img[i][j][2] = bg_color[0]
                             else:
                                 if self.checkbox2.isChecked():
                                     if self.checkbox3.isChecked():
@@ -452,14 +509,14 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                                         final_img[i][j][1] = img_tmp[i][j]
                                         final_img[i][j][2] = img_tmp[i][j]
                                 else:
-                                    final_img[i][j][0] = main_color[0]
+                                    final_img[i][j][0] = main_color[2]
                                     final_img[i][j][1] = main_color[1]
-                                    final_img[i][j][2] = main_color[2]
+                                    final_img[i][j][2] = main_color[0]
                         else:
                             if img_1[i % 13][j % 8] > 127:
-                                final_img[i][j][0] = bg_color[0]
+                                final_img[i][j][0] = bg_color[2]
                                 final_img[i][j][1] = bg_color[1]
-                                final_img[i][j][2] = bg_color[2]
+                                final_img[i][j][2] = bg_color[0]
                             else:
                                 if self.checkbox2.isChecked():
                                     if self.checkbox3.isChecked():
@@ -471,10 +528,11 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
                                         final_img[i][j][1] = img_tmp[i][j]
                                         final_img[i][j][2] = img_tmp[i][j]
                                 else:
-                                    final_img[i][j][0] = main_color[0]
+                                    final_img[i][j][0] = main_color[2]
                                     final_img[i][j][1] = main_color[1]
-                                    final_img[i][j][2] = main_color[2]
+                                    final_img[i][j][2] = main_color[0]
         self.lb_Done.setText('Done !')
+        self.lb_Done.adjustSize()
         self.progressBar.setValue(100)
         if display.onScreen:
             self.ui.update(final_img)
@@ -489,7 +547,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
 
 if __name__ == "__main__":
-    def btn_clicked(i):
+    def btn_clicked(_):
         sys.exit(0)
     app = QtWidgets.QApplication(sys.argv)
     # res detect
