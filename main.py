@@ -5,6 +5,7 @@ import numpy as np
 import os
 import sys
 from PIL import Image
+from random import randint
 # variables
 img = ''
 width, height = 0, 0
@@ -113,14 +114,17 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.checkBox_r.setGeometry(QtCore.QRect(30, 180, 70, 17))
         self.checkBox_r.setObjectName("checkBoxr")
         self.checkbox2 = QtWidgets.QCheckBox(self.centralwidget)
-        self.checkbox2.setGeometry(QtCore.QRect(385, 140, 70, 17))
+        self.checkbox2.setGeometry(QtCore.QRect(375, 140, 70, 17))
         self.checkbox2.setObjectName('CheckBoxFi')
         self.checkbox3 = QtWidgets.QCheckBox(self.centralwidget)
-        self.checkbox3.setGeometry(QtCore.QRect(385, 160, 70, 17))
+        self.checkbox3.setGeometry(QtCore.QRect(375, 160, 70, 17))
         self.checkbox3.setObjectName('CheckBoxC')
         self.checkbox4 = QtWidgets.QCheckBox(self.centralwidget)
-        self.checkbox4.setGeometry(QtCore.QRect(385, 180, 70, 17))
+        self.checkbox4.setGeometry(QtCore.QRect(375, 180, 70, 17))
         self.checkbox4.setObjectName('CheckboxRcolor')
+        self.checkbox5 = QtWidgets.QCheckBox(self.centralwidget)
+        self.checkbox5.setGeometry(QtCore.QRect(375, 200, 70, 17))
+        self.checkbox5.setObjectName('CheckRand')
         self.sens = QtWidgets.QDoubleSpinBox(self.centralwidget)
         self.sens.setGeometry(QtCore.QRect(75, 209, 42, 22))
         self.sens.setMinimum(0)
@@ -132,20 +136,20 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.lb_sens.setText('Sens :')
         self.lb_sens.adjustSize()
         self.btn_bgcolor = QtWidgets.QPushButton(self.centralwidget)
-        self.btn_bgcolor.setGeometry(QtCore.QRect(150, 160, 75, 23))
+        self.btn_bgcolor.setGeometry(QtCore.QRect(140, 160, 75, 23))
         self.btn_bgcolor.setObjectName("btn_bgcolor")
         self.btn_maincolor = QtWidgets.QPushButton(self.centralwidget)
-        self.btn_maincolor.setGeometry(QtCore.QRect(290, 160, 81, 23))
+        self.btn_maincolor.setGeometry(QtCore.QRect(280, 160, 81, 23))
         self.btn_maincolor.setObjectName("btn_maincolor")
         self.clr_bg = QtWidgets.QLabel(self.centralwidget)
         self.clr_bg.setEnabled(True)
-        self.clr_bg.setGeometry(QtCore.QRect(127, 163, 16, 16))
+        self.clr_bg.setGeometry(QtCore.QRect(117, 163, 16, 16))
         self.clr_bg.setAutoFillBackground(False)
         self.clr_bg.setText("")
         self.clr_bg.setObjectName("clr_bg")
         self.clr_bg.setStyleSheet('background-color: #fff')
         self.clr_main = QtWidgets.QLabel(self.centralwidget)
-        self.clr_main.setGeometry(QtCore.QRect(270, 163, 16, 16))
+        self.clr_main.setGeometry(QtCore.QRect(260, 163, 16, 16))
         self.clr_main.setText("")
         self.clr_main.setObjectName("clr_main")
         self.clr_main.setStyleSheet('background-color: #000')
@@ -222,6 +226,10 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.checkbox4.setText(_translate("self", "Reverse Colors"))
         self.checkbox4.adjustSize()
         self.checkbox4.setEnabled(False)
+        self.checkbox5.setText(_translate('self', 'Random Numbers'))
+        self.checkbox5.adjustSize()
+        self.checkbox5.setEnabled(False)
+        self.checkbox5.clicked.connect(self.rand_click)
         self.btn_bgcolor.setText(_translate("self", "Pick bg color"))
         self.btn_bgcolor.adjustSize()
         self.btn_bgcolor.clicked.connect(self.color_pick_bg)
@@ -240,12 +248,27 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.actionAbout.triggered.connect(self.show_about)
         self.show()
 
+    def rand_click(self):
+        if self.checkbox5.isChecked():
+            self.checkBox_r.setChecked(False)
+            self.checkBox_r.setEnabled(False)
+            self.sens.setEnabled(False)
+            self.lb_sens.setEnabled(False)
+        else:
+            self.checkBox_r.setEnabled(True)
+            self.sens.setEnabled(True)
+            self.lb_sens.setEnabled(True)
+
     def spinbox_value_changed(self):
         global final_width, final_height
         final_width, final_height = self.standard_Image_Size()
         self.display_img_size()
 
     def num_col(self):
+        if any([self.checkBox.isChecked(), self.checkbox2.isChecked(), self.checkBox1.isChecked()]):
+            self.checkbox5.setEnabled(True)
+        else:
+            self.checkbox5.setEnabled(False)
         if self.checkBox.isChecked() and self.checkbox2.isChecked():
             self.checkbox2.setChecked(False)
         if self.checkBox.isChecked():
@@ -254,14 +277,23 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             self.checkbox4.setEnabled(False)
 
     def num_col2(self):
+        if any([self.checkBox.isChecked(), self.checkbox2.isChecked(), self.checkBox1.isChecked()]):
+            self.checkbox5.setEnabled(True)
+        else:
+            self.checkbox5.setEnabled(False)
         if all([self.checkbox2.isChecked(), self.checkBox.isChecked()]):
             self.checkBox.setChecked(False)
+            self.checkbox4.setEnabled(False)
         if self.checkbox2.isChecked():
             self.btn_maincolor.setEnabled(False)
         else:
             self.btn_maincolor.setEnabled(True)
 
     def fill_change(self):
+        if any([self.checkBox.isChecked(), self.checkbox2.isChecked(), self.checkBox1.isChecked()]):
+            self.checkbox5.setEnabled(True)
+        else:
+            self.checkbox5.setEnabled(False)
         if self.checkBox1.isChecked():
             self.btn_bgcolor.setEnabled(False)
         else:
@@ -351,18 +383,24 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
             for i in range(img_tm.shape[0]):
                 tmp.append([])
                 for j in range(img_tm.shape[1]):
-                    if img_tm[i][j] < sens:
-                        tmp[i].append((one, img_tm[i][j]))
+                    if not self.checkbox5.isChecked():
+                        if img_tm[i][j] < sens:
+                            tmp[i].append((one, img_tm[i][j]))
+                        else:
+                            tmp[i].append((zero, img_tm[i][j]))
                     else:
-                        tmp[i].append((zero, img_tm[i][j]))
+                        tmp[i].append((randint(0, 1), img_tm[i][j]))
         else:
             for i in range(img_tm.shape[0]):
                 tmp.append([])
                 for j in range(img_tm.shape[1]):
-                    if img_tm[i][j] < sens:
-                        tmp[i].append(one)
+                    if not self.checkbox5.isChecked():
+                        if img_tm[i][j] < sens:
+                            tmp[i].append(one)
+                        else:
+                            tmp[i].append(zero)
                     else:
-                        tmp[i].append(zero)
+                        tmp[i].append(randint(0, 1))
         for i in range(final_height):
             for j in range(final_width):
                 tm = tmp[i // 13][j // 8]
