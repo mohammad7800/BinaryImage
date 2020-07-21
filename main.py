@@ -6,6 +6,7 @@ import os
 import sys
 from PIL import Image
 from random import randint
+
 # variables
 img = ''
 width, height = 0, 0
@@ -246,6 +247,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.actionExit.triggered.connect(sys.exit)
         self.actionAbout.setText(_translate("self", "About"))
         self.actionAbout.triggered.connect(self.show_about)
+        self.adjustSize()
         self.show()
 
     def rand_click(self):
